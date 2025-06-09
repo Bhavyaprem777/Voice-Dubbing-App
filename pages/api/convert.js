@@ -45,7 +45,8 @@ export default async function handler(req, res) {
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
     // In deployed environment, decode base64 and write the JSON file
     const base64Key = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64;
-    const keyFilePath = path.join(process.cwd(), 'voice-dubbing-app.json');
+    // Write to /tmp folder which is usually writable in serverless envs
+    const keyFilePath = path.join('/tmp', 'voice-dubbing-app.json');
     try {
       const keyFileJson = Buffer.from(base64Key, 'base64').toString('utf8');
       fs.writeFileSync(keyFilePath, keyFileJson, { encoding: 'utf8' });
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to setup Google credentials' });
     }
   } else {
-    // On local system, assume voice-dubbing-app.json is already present
+    // On local system, assume voice-dubbing-app.json is already present in root
     const localKeyPath = path.join(process.cwd(), 'voice-dubbing-app.json');
     if (fs.existsSync(localKeyPath)) {
       process.env.GOOGLE_APPLICATION_CREDENTIALS = localKeyPath;
