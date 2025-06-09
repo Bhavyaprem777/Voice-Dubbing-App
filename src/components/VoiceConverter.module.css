@@ -1,0 +1,48 @@
+.container {
+  background-color: #2c2c2c;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 0 12px rgba(0, 188, 212, 0.3);
+  transition: all 0.3s ease-in-out;
+}
+
+.micButton {
+  font-size: 2rem;
+  padding: 1rem 1.2rem;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #fff;
+  background-color: #00bcd4;
+  transition: background-color 0.3s ease;
+}
+
+.recording {
+  background-color: #ff4d4d;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.statusText {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.errorText {
+  margin-top: 1rem;
+  color: red;
+  font-weight: bold;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,53 @@
+.uploadWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s ease-in-out;
+}
+
+.waveformContainer {
+  width: 200px;
+  transform: translateX(-150%);
+  opacity: 0;
+  transition: all 1s ease-in-out;
+}
+
+.animate {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.waveSvg {
+  width: 100%;
+  height: 60px;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scaleY(1); }
+  50% { transform: scaleY(1.5); }
+  100% { transform: scaleY(1); }
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background-color: #333;
+  border-radius: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(to right, #00c6ff, #0072ff);
+  transition: width 0.3s ease-in-out;
+}
+
+.uploadingText {
+  color: #00c6ff;
+  font-weight: bold;
+  margin-top: 8px;
+  transition: opacity 0.5s ease-in-out;
+}
