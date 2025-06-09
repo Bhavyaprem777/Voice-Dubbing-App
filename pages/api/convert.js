@@ -1,4 +1,6 @@
 import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 import speech from '@google-cloud/speech';
 import textToSpeech from '@google-cloud/text-to-speech';
 import { v2 as TranslateV2 } from '@google-cloud/translate';
@@ -39,6 +41,27 @@ export default async function handler(req, res) {
     return res.status(405).end('Method Not Allowed');
   }
 
+  // Decode base64 service account key from env var and write to file
+  const base64Key = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64;
+  if (!base64Key) {
+    return res.status(500).json({ error: 'Google credentials missing' });
+  }
+
+  // Define a path for temp JSON file
+  const keyFilePath = path.join(process.cwd(), 'voice-dubbing-app.json');
+
+  try {
+    // Write decoded JSON to file (overwrite if exists)
+    const keyFileJson = Buffer.from(base64Key, 'base64').toString('utf8');
+    fs.writeFileSync(keyFilePath, keyFileJson, { encoding: 'utf8' });
+
+    // Set environment variable so Google SDK can pick it up
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = keyFilePath;
+  } catch (err) {
+    console.error('Error writing Google credentials file:', err);
+    return res.status(500).json({ error: 'Failed to setup Google credentials' });
+  }
+
   try {
     await runMiddleware(req, res, upload.single('audio'));
   } catch (err) {
@@ -57,7 +80,7 @@ export default async function handler(req, res) {
       audio: { content: audioBuffer.toString('base64') },
       config: {
         encoding,
-        sampleRateHertz: 44100, // default, can be adjusted if you parse audio metadata
+        sampleRateHertz: 44100,
         languageCode: 'en-US',
       },
     });
@@ -86,5 +109,8 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('Conversion error:', err);
     res.status(500).json({ error: '❌ Audio conversion failed. Try again.' });
+  } finally {
+    // Optional: delete the temp key file for security, or keep it for next calls
+    // fs.unlinkSync(keyFilePath);
   }
 }
