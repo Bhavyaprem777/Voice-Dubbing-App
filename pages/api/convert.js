@@ -41,25 +41,27 @@ export default async function handler(req, res) {
     return res.status(405).end('Method Not Allowed');
   }
 
-  // Decode base64 service account key from env var and write to file
-  const base64Key = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64;
-  if (!base64Key) {
-    return res.status(500).json({ error: 'Google credentials missing' });
-  }
-
-  // Define a path for temp JSON file
-  const keyFilePath = path.join(process.cwd(), 'voice-dubbing-app.json');
-
-  try {
-    // Write decoded JSON to file (overwrite if exists)
-    const keyFileJson = Buffer.from(base64Key, 'base64').toString('utf8');
-    fs.writeFileSync(keyFilePath, keyFileJson, { encoding: 'utf8' });
-
-    // Set environment variable so Google SDK can pick it up
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = keyFilePath;
-  } catch (err) {
-    console.error('Error writing Google credentials file:', err);
-    return res.status(500).json({ error: 'Failed to setup Google credentials' });
+  // Handle Google credentials dynamically:
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
+    // In deployed environment, decode base64 and write the JSON file
+    const base64Key = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64;
+    const keyFilePath = path.join(process.cwd(), 'voice-dubbing-app.json');
+    try {
+      const keyFileJson = Buffer.from(base64Key, 'base64').toString('utf8');
+      fs.writeFileSync(keyFilePath, keyFileJson, { encoding: 'utf8' });
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = keyFilePath;
+    } catch (err) {
+      console.error('Error writing Google credentials file:', err);
+      return res.status(500).json({ error: 'Failed to setup Google credentials' });
+    }
+  } else {
+    // On local system, assume voice-dubbing-app.json is already present
+    const localKeyPath = path.join(process.cwd(), 'voice-dubbing-app.json');
+    if (fs.existsSync(localKeyPath)) {
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = localKeyPath;
+    } else {
+      return res.status(500).json({ error: 'Google credentials not found locally' });
+    }
   }
 
   try {
@@ -74,7 +76,6 @@ export default async function handler(req, res) {
   const encoding = getEncodingFromExtension(filename);
 
   try {
-    // 1. Transcribe English audio
     const speechClient = new speech.SpeechClient();
     const [speechResponse] = await speechClient.recognize({
       audio: { content: audioBuffer.toString('base64') },
@@ -91,11 +92,9 @@ export default async function handler(req, res) {
 
     if (!transcription) throw new Error('❌ Transcription failed');
 
-    // 2. Translate English text to Hindi
     const translate = new TranslateV2.Translate();
     const [translatedText] = await translate.translate(transcription, 'hi');
 
-    // 3. Convert translated Hindi text to speech
     const ttsClient = new textToSpeech.TextToSpeechClient();
     const [ttsResponse] = await ttsClient.synthesizeSpeech({
       input: { text: translatedText },
@@ -103,14 +102,10 @@ export default async function handler(req, res) {
       audioConfig: { audioEncoding: 'MP3' },
     });
 
-    // Send back the audio file
     res.setHeader('Content-Type', 'audio/mpeg');
     res.send(ttsResponse.audioContent);
   } catch (err) {
-    console.error('Conversion error:', err);
+    console.error('Conversion error:', err.message || err);
     res.status(500).json({ error: '❌ Audio conversion failed. Try again.' });
-  } finally {
-    // Optional: delete the temp key file for security, or keep it for next calls
-    // fs.unlinkSync(keyFilePath);
   }
 }
