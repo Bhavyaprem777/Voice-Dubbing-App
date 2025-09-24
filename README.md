@@ -48,13 +48,13 @@ This project is a voice dubbing interface built using **React (Next.js)** and in
 
 ## 🧰 Tech Stack
 
-- **Frontend**: Next.js (React), CSS Modules / SCSS
+- **Frontend**: Next.js , CSS Modules / SCSS
 - **Animations**: CSS keyframes, React state, optional `framer-motion`
 - **APIs Used**:
   - 🗣️ Google Cloud Speech-to-Text
   - 🌐 Google Cloud Translate API
   - 🔊 Google Cloud Text-to-Speech
-- **Deployment**: (Optional) Vercel or any static host
+- **Deployment**: Live Demo: https://voice-dub.netlify.app/
 
 ---
 
